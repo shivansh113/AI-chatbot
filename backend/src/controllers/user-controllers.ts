@@ -1,6 +1,7 @@
 import { NextFunction, Response, Request } from "express";
 import user from "../models/user.js"
-import { hash } from "bcrypt"
+import { hash, compare } from "bcrypt"
+import { PassThrough } from "stream";
 
 
 export const getAllUsers = async (req:Request, res:Response, next:NextFunction) => {
@@ -18,10 +19,36 @@ export const getAllUsers = async (req:Request, res:Response, next:NextFunction) 
 export const userSignup = async(req:Request, res:Response, next:NextFunction) => {
     try {
         const { name, email, password } = req.body;
+        const existinguser = await user.findOne({email})
+        if (existinguser) {
+            return res.status(401).send("User already registered")
+        }
         const hashedPassword = await hash(password, 10);
         const User = new user({ name, email, password: hashedPassword });
         await User.save()
         return res.status(201).json({message:"OK", id:User._id.toString()});
+
+    } catch (error) {
+        console.log(error);
+        
+        return res.status(200).json({message:"ERROR", cause: error.message});
+    }
+}
+
+export const userLogin = async(req:Request, res:Response, next:NextFunction) => {
+    try {
+        const { email, password } = req.body;
+        const User = await user.findOne({email})
+        if (!User) {
+            return res.status(401).send("User not registered");
+        }
+
+        const isPassCorr = await compare(password, User.password);
+        if (!isPassCorr) {
+            return res.status(403).send("Incorrect password");
+        }
+
+        return res.status(200).json({message:"OK", id:User._id.toString()});
 
     } catch (error) {
         console.log(error);
