@@ -17,9 +17,9 @@ export const getAllUsers = async (req:Request, res:Response, next:NextFunction) 
 
 export const userSignup = async(req:Request, res:Response, next:NextFunction) => {
     try {
-        const {name, email, password} = req.body;
+        const { name, email, password } = req.body;
         const hashedPassword = await hash(password, 10);
-        const User = new user({name, email, password: hashedPassword});
+        const User = new user({ name, email, password: hashedPassword });
         await User.save()
         return res.status(200).json({message:"OK", id:User._id.toString()});
 
