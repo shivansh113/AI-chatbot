@@ -2,6 +2,8 @@ import { NextFunction, Response, Request } from "express";
 import user from "../models/user.js"
 import { hash, compare } from "bcrypt"
 import { PassThrough } from "stream";
+import { createToken } from "../utils/token-manager.js";
+import { COOKIE_NAME } from "../utils/constants.js";
 
 
 export const getAllUsers = async (req:Request, res:Response, next:NextFunction) => {
@@ -26,6 +28,25 @@ export const userSignup = async(req:Request, res:Response, next:NextFunction) =>
         const hashedPassword = await hash(password, 10);
         const User = new user({ name, email, password: hashedPassword });
         await User.save()
+
+        res.clearCookie(COOKIE_NAME, {
+            httpOnly: true,
+            domain: "localhost",
+            signed: true,
+            path: "/",            
+        });
+
+        const token = createToken(User._id.toString(), User.email, "7d")
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 7); 
+        res.cookie(COOKIE_NAME, token, {
+            path: "/", 
+            domain: "localhost", 
+            expires,
+            httpOnly:true, 
+            signed: true,
+        });
+        
         return res.status(201).json({message:"OK", id:User._id.toString()});
 
     } catch (error) {
@@ -48,6 +69,23 @@ export const userLogin = async(req:Request, res:Response, next:NextFunction) => 
             return res.status(403).send("Incorrect password");
         }
 
+        res.clearCookie(COOKIE_NAME, {
+            httpOnly: true,
+            domain: "localhost",
+            signed: true,
+            path: "/",            
+        });
+
+        const token = createToken(User._id.toString(), User.email, "7d")
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 7); 
+        res.cookie(COOKIE_NAME, token, {
+            path: "/", 
+            domain: "localhost", 
+            expires,
+            httpOnly:true, 
+            signed: true,
+        });
         return res.status(200).json({message:"OK", id:User._id.toString()});
 
     } catch (error) {

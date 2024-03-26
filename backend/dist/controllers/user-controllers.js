@@ -1,5 +1,7 @@
 import user from "../models/user.js";
 import { hash, compare } from "bcrypt";
+import { createToken } from "../utils/token-manager.js";
+import { COOKIE_NAME } from "../utils/constants.js";
 export const getAllUsers = async (req, res, next) => {
     try {
         const users = await user.find();
@@ -20,6 +22,22 @@ export const userSignup = async (req, res, next) => {
         const hashedPassword = await hash(password, 10);
         const User = new user({ name, email, password: hashedPassword });
         await User.save();
+        res.clearCookie(COOKIE_NAME, {
+            httpOnly: true,
+            domain: "localhost",
+            signed: true,
+            path: "/",
+        });
+        const token = createToken(User._id.toString(), User.email, "7d");
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 7);
+        res.cookie(COOKIE_NAME, token, {
+            path: "/",
+            domain: "localhost",
+            expires,
+            httpOnly: true,
+            signed: true,
+        });
         return res.status(201).json({ message: "OK", id: User._id.toString() });
     }
     catch (error) {
@@ -38,6 +56,22 @@ export const userLogin = async (req, res, next) => {
         if (!isPassCorr) {
             return res.status(403).send("Incorrect password");
         }
+        res.clearCookie(COOKIE_NAME, {
+            httpOnly: true,
+            domain: "localhost",
+            signed: true,
+            path: "/",
+        });
+        const token = createToken(User._id.toString(), User.email, "7d");
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 7);
+        res.cookie(COOKIE_NAME, token, {
+            path: "/",
+            domain: "localhost",
+            expires,
+            httpOnly: true,
+            signed: true,
+        });
         return res.status(200).json({ message: "OK", id: User._id.toString() });
     }
     catch (error) {
