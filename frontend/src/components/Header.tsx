@@ -1,5 +1,6 @@
 import React from "react";
 import { AppBar, Toolbar } from "@mui/material";
+import Logo from "./shared/Logo";
 
 const Header = () => {
     return (
@@ -10,8 +11,11 @@ const Header = () => {
         }}>
             <Toolbar sx={{
                 display: "flex"
-                
-            }}></Toolbar>        
+
+            }}>
+                <Logo />
+
+            </Toolbar>        
         </AppBar>
     )
 }
